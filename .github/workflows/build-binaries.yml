@@ -26,10 +26,16 @@ jobs:
         target:
           - name: darwin-arm64
             runner: macos-14
-            arch: arm64
+            platform: darwin
           - name: darwin-x64
-            runner: macos-13
-            arch: x64
+            runner: macos-15-intel
+            platform: darwin
+          - name: windows-x64
+            runner: windows-2025
+            platform: win32
+          - name: windows-arm64
+            runner: windows-11-arm
+            platform: win32
 
     steps:
       - name: Checkout
@@ -45,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
@@ -62,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           if command -v strip >/dev/null 2>&1; then
-            strip -x build/Release/node_mmkv.node || true
+            strip -x build/Release/mmkv.node || true
           fi
 
       - name: Package binary bundle
@@ -70,20 +76,19 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
-          DIST_DIR="dist/node-mmkv-v${VERSION}-${{ matrix.target.name }}"
-          mkdir -p "${DIST_DIR}/build/Release" "${DIST_DIR}/lib" "${DIST_DIR}/test"
+          DIST_DIR="dist/mmkv-v${VERSION}-${{ matrix.target.name }}"
+          mkdir -p "${DIST_DIR}/build/Release"
           cp package.json "${DIST_DIR}/"
           cp pnpm-lock.yaml "${DIST_DIR}/"
           cp binding.gyp "${DIST_DIR}/"
           cp index.d.ts "${DIST_DIR}/"
           cp DEVELOPMENT.md "${DIST_DIR}/"
           if [ -f README.md ]; then cp README.md "${DIST_DIR}/"; fi
-          cp lib/index.js "${DIST_DIR}/lib/"
-          cp build/Release/node_mmkv.node "${DIST_DIR}/build/Release/"
+          cp build/Release/mmkv.node "${DIST_DIR}/build/Release/"
           tar --options gzip:compression-level=9 -czf "${DIST_DIR}.tar.gz" -C dist "$(basename "${DIST_DIR}")"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target.name }}
           path: dist/*.tar.gz

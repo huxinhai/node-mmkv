@@ -812,4 +812,4 @@ Napi::Object InitModule(Napi::Env env, Napi::Object exports) {
 
 } // namespace
 
-NODE_API_MODULE(node_mmkv, InitModule)
+NODE_API_MODULE(mmkv, InitModule)

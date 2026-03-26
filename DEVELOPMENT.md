@@ -1,6 +1,6 @@
-# node-mmkv Development
+# mmkv Development
 
-本文档用于约束 `node-mmkv` 的本地开发方式，尤其是 macOS 下 Apple Silicon(M1/M2/M3/M4) 与 Intel(x86_64) 两类机器的兼容开发流程。
+本文档用于约束 `mmkv` 的本地开发方式，尤其是 macOS 下 Apple Silicon(M1/M2/M3/M4) 与 Intel(x86_64) 两类机器的兼容开发流程。
 
 当前仓库还处在项目骨架阶段，根目录里暂时只有：
 
@@ -15,7 +15,7 @@
 
 ## 1. 开发目标
 
-`node-mmkv` 的目标是基于 Tencent MMKV 提供一个 Node.js / Electron 可用的原生模块。
+`mmkv` 的目标是基于 Tencent MMKV 提供一个 Node.js / Electron 可用的原生模块。
 
 建议的技术路线：
 
@@ -63,7 +63,7 @@ xcode-select -p
 
 ```bash
 git clone --recursive <repo-url>
-cd node-mmkv
+cd mmkv
 ```
 
 如果仓库已经拉下来了，再补子模块：
@@ -349,7 +349,7 @@ git submodule update --init --recursive
 
 ## 13. 一句话原则
 
-在 `node-mmkv` 里，macOS 兼容的关键不是“代码能编过一次”，而是：
+在 `mmkv` 里，macOS 兼容的关键不是“代码能编过一次”，而是：
 
 - 同一套源码
 - 不写死芯片相关路径

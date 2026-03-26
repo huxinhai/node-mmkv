@@ -1,12 +1,14 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createRequire } from "node:module";
 
-const { MMKV, version } = require("../lib");
+const require = createRequire(import.meta.url);
+const { MMKV, version } = require("..") as typeof import("../index");
 
-const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "node-mmkv-"));
+const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-"));
 MMKV.initialize(rootDir);
 
 test.after(() => {
@@ -112,8 +114,8 @@ test("MMKV addon can open defaultMMKV and persist values", () => {
 });
 
 test("MMKV addon can backup and restore one store", () => {
-  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), "node-mmkv-backup-one-"));
-  const restoreDir = fs.mkdtempSync(path.join(os.tmpdir(), "node-mmkv-restore-one-"));
+  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-backup-one-"));
+  const restoreDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-restore-one-"));
 
   try {
     const kv = new MMKV("backup-one", { rootPath: rootDir });
@@ -134,8 +136,8 @@ test("MMKV addon can backup and restore one store", () => {
 });
 
 test("MMKV addon can backup and restore all stores", () => {
-  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), "node-mmkv-backup-all-"));
-  const restoreDir = fs.mkdtempSync(path.join(os.tmpdir(), "node-mmkv-restore-all-"));
+  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-backup-all-"));
+  const restoreDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-restore-all-"));
 
   try {
     const kvA = new MMKV("backup-all-a", { rootPath: rootDir });

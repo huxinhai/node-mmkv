@@ -1,11 +1,12 @@
-# node-mmkv
+# mmkv
 
-`node-mmkv` 是一个基于 Node-API 的 Tencent MMKV 原生绑定，面向 Node.js / Electron 的本地高性能 KV 存储场景。
+`mmkv` 是一个基于 Node-API 的 Tencent MMKV 原生绑定，面向 Node.js / Electron 的本地高性能 KV 存储场景。
 
 当前版本重点支持：
 
 - macOS Apple Silicon: `arm64`
 - macOS Intel: `x64`
+- Windows: `x64` / `arm64`
 - Node.js 20+
 - 包管理器：`pnpm`
 
@@ -52,7 +53,7 @@ pnpm test
 ## 快速开始
 
 ```js
-const { MMKV } = require("node-mmkv");
+const { MMKV } = require("mmkv");
 
 MMKV.initialize("./.mmkv");
 
@@ -82,7 +83,7 @@ MMKV.onExit();
 ### 创建实例
 
 ```js
-const { MMKV } = require("node-mmkv");
+const { MMKV } = require("mmkv");
 
 MMKV.initialize("/tmp/mmkv-root");
 
@@ -113,7 +114,7 @@ secure.close();
 ### defaultMMKV
 
 ```js
-const { MMKV } = require("node-mmkv");
+const { MMKV } = require("mmkv");
 
 MMKV.initialize("/tmp/mmkv-root");
 
@@ -138,7 +139,7 @@ const restored = kv.getBuffer("payload");
 ### 备份与恢复
 
 ```js
-const { MMKV } = require("node-mmkv");
+const { MMKV } = require("mmkv");
 
 MMKV.initialize("/tmp/mmkv-root");
 
@@ -210,6 +211,8 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 - 输出产物分为：
   - `darwin-arm64`
   - `darwin-x64`
+  - `windows-arm64`
+  - `windows-x64`
 - 打包前会对 `.node` 做符号裁剪，并使用更高压缩级别生成归档
 
 ## 开发说明
@@ -220,7 +223,6 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 
 ## 当前限制
 
-- 当前仓库主要面向 macOS
 - 目前还没有预编译下载脚本和 npm 发布流程
 - 暂未补齐全部 MMKV 上游能力，优先覆盖 Node / Electron 常用能力
 - 原生二进制已做体积优化，但不会做激进混淆或 UPX 之类高风险处理，以避免 Electron / macOS 加载兼容性问题
