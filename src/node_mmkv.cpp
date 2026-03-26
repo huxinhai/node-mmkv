@@ -121,9 +121,13 @@ std::optional<std::string> GetOptionalString(const Napi::Object &options, const 
     return value.As<Napi::String>().Utf8Value();
 }
 
+MMKVPath_t ToMMKVPath(const std::string &value) {
+    return string2MMKVPath_t(value);
+}
+
 struct ParsedConfig {
     MMKVConfig config;
-    std::optional<std::string> rootPath;
+    std::optional<MMKVPath_t> rootPath;
     std::optional<std::string> cryptKey;
 };
 
@@ -148,7 +152,9 @@ ParsedConfig ParseConfig(const Napi::Env &env, const Napi::Value &value) {
 
     parsed.config.mode = mode;
     parsed.config.expectedCapacity = GetOptionalUint32(options, "expectedCapacity", 0);
-    parsed.rootPath = GetOptionalString(options, "rootPath");
+    if (auto rootPath = GetOptionalString(options, "rootPath")) {
+        parsed.rootPath = ToMMKVPath(*rootPath);
+    }
     parsed.cryptKey = GetOptionalString(options, "cryptKey");
     parsed.config.aes256 = GetOptionalBool(options, "aes256", false);
 
@@ -280,6 +286,7 @@ private:
         }
 
         auto rootDir = RequireString(info[0], "rootDir");
+        auto rootPath = ToMMKVPath(rootDir);
         auto logLevel = MMKV_NAMESPACE_PREFIX::MMKVLogInfo;
         if (info.Length() > 1 && !info[1].IsUndefined()) {
             if (!info[1].IsNumber()) {
@@ -288,8 +295,8 @@ private:
             logLevel = static_cast<MMKVLogLevel>(info[1].As<Napi::Number>().Int32Value());
         }
 
-        std::filesystem::create_directories(rootDir);
-        MMKVNative::initializeMMKV(rootDir, logLevel);
+        std::filesystem::create_directories(rootPath);
+        MMKVNative::initializeMMKV(rootPath, logLevel);
         return Napi::String::New(env, rootDir);
     }
 
@@ -321,10 +328,10 @@ private:
             throw Napi::TypeError::New(env, "backupOneToDirectory expects mmapID and dstDir");
         }
         auto mmapID = RequireString(info[0], "mmapID");
-        auto dstDir = RequireString(info[1], "dstDir");
-        std::optional<std::string> srcDir;
+        auto dstDir = ToMMKVPath(RequireString(info[1], "dstDir"));
+        std::optional<MMKVPath_t> srcDir;
         if (info.Length() > 2 && !info[2].IsUndefined() && !info[2].IsNull()) {
-            srcDir = RequireString(info[2], "srcDir");
+            srcDir = ToMMKVPath(RequireString(info[2], "srcDir"));
         }
         std::filesystem::create_directories(dstDir);
         auto ok = srcDir ? MMKVNative::backupOneToDirectory(mmapID, dstDir, &(*srcDir))
@@ -338,10 +345,10 @@ private:
             throw Napi::TypeError::New(env, "restoreOneFromDirectory expects mmapID and srcDir");
         }
         auto mmapID = RequireString(info[0], "mmapID");
-        auto srcDir = RequireString(info[1], "srcDir");
-        std::optional<std::string> dstDir;
+        auto srcDir = ToMMKVPath(RequireString(info[1], "srcDir"));
+        std::optional<MMKVPath_t> dstDir;
         if (info.Length() > 2 && !info[2].IsUndefined() && !info[2].IsNull()) {
-            dstDir = RequireString(info[2], "dstDir");
+            dstDir = ToMMKVPath(RequireString(info[2], "dstDir"));
             std::filesystem::create_directories(*dstDir);
         }
         auto ok = dstDir ? MMKVNative::restoreOneFromDirectory(mmapID, srcDir, &(*dstDir))
@@ -354,10 +361,10 @@ private:
         if (info.Length() < 1) {
             throw Napi::TypeError::New(env, "backupAllToDirectory expects dstDir");
         }
-        auto dstDir = RequireString(info[0], "dstDir");
-        std::optional<std::string> srcDir;
+        auto dstDir = ToMMKVPath(RequireString(info[0], "dstDir"));
+        std::optional<MMKVPath_t> srcDir;
         if (info.Length() > 1 && !info[1].IsUndefined() && !info[1].IsNull()) {
-            srcDir = RequireString(info[1], "srcDir");
+            srcDir = ToMMKVPath(RequireString(info[1], "srcDir"));
         }
         std::filesystem::create_directories(dstDir);
         auto count = srcDir ? MMKVNative::backupAllToDirectory(dstDir, &(*srcDir))
@@ -370,10 +377,10 @@ private:
         if (info.Length() < 1) {
             throw Napi::TypeError::New(env, "restoreAllFromDirectory expects srcDir");
         }
-        auto srcDir = RequireString(info[0], "srcDir");
-        std::optional<std::string> dstDir;
+        auto srcDir = ToMMKVPath(RequireString(info[0], "srcDir"));
+        std::optional<MMKVPath_t> dstDir;
         if (info.Length() > 1 && !info[1].IsUndefined() && !info[1].IsNull()) {
-            dstDir = RequireString(info[1], "dstDir");
+            dstDir = ToMMKVPath(RequireString(info[1], "dstDir"));
             std::filesystem::create_directories(*dstDir);
         }
         auto count = dstDir ? MMKVNative::restoreAllFromDirectory(srcDir, &(*dstDir))
