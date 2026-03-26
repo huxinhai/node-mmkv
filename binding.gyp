@@ -45,6 +45,12 @@
       "xcode_settings": {
         "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
         "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+        "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
+        "DEAD_CODE_STRIPPING": "YES",
+        "STRIP_INSTALLED_PRODUCT": "YES",
+        "COPY_PHASE_STRIP": "YES",
+        "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "MACOSX_DEPLOYMENT_TARGET": "11.0"
       },
       "conditions": [
@@ -53,6 +59,14 @@
           {
             "libraries": [
               "-lz"
+            ]
+          }
+        ],
+        [
+          "target_arch=='arm64'",
+          {
+            "sources": [
+              "MMKV/Core/aes/openssl/openssl_aesv8-armx.S"
             ]
           }
         ]

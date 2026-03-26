@@ -1,0 +1,97 @@
+name: build-binaries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build:
+    name: ${{ matrix.target.name }}
+    runs-on: ${{ matrix.target.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: darwin-arm64
+            runner: macos-14
+            arch: arm64
+          - name: darwin-x64
+            runner: macos-13
+            arch: x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build native addon
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Strip native binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v strip >/dev/null 2>&1; then
+            strip -x build/Release/node_mmkv.node || true
+          fi
+
+      - name: Package binary bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          DIST_DIR="dist/node-mmkv-v${VERSION}-${{ matrix.target.name }}"
+          mkdir -p "${DIST_DIR}/build/Release" "${DIST_DIR}/lib" "${DIST_DIR}/test"
+          cp package.json "${DIST_DIR}/"
+          cp pnpm-lock.yaml "${DIST_DIR}/"
+          cp binding.gyp "${DIST_DIR}/"
+          cp index.d.ts "${DIST_DIR}/"
+          cp DEVELOPMENT.md "${DIST_DIR}/"
+          if [ -f README.md ]; then cp README.md "${DIST_DIR}/"; fi
+          cp lib/index.js "${DIST_DIR}/lib/"
+          cp build/Release/node_mmkv.node "${DIST_DIR}/build/Release/"
+          tar --options gzip:compression-level=9 -czf "${DIST_DIR}.tar.gz" -C dist "$(basename "${DIST_DIR}")"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.target.name }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
