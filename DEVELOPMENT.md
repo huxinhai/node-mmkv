@@ -2,16 +2,7 @@
 
 本文档用于约束 `mmkv` 的本地开发方式，尤其是 macOS 下 Apple Silicon(M1/M2/M3/M4) 与 Intel(x86_64) 两类机器的兼容开发流程。
 
-当前仓库还处在项目骨架阶段，根目录里暂时只有：
-
-- `MMKV/`：Tencent MMKV 源码子模块
-- `src/`：预留给 Node.js / Electron 原生绑定代码
-- `DEVELOPMENT.md`：当前开发文档
-
-这意味着本文档优先解决两件事：
-
-- 如何把开发环境稳定搭起来
-- 后续开始写 Node 原生模块时，怎样避免只在某一类 Mac 上能编译
+当前仓库已经包含可工作的 Node-API 绑定与测试，本文档除了说明环境搭建，也同步记录当前源码分层、测试方式以及多架构维护约束。
 
 ## 1. 开发目标
 
@@ -26,13 +17,17 @@
   - `arm64`，对应 Apple Silicon
   - `x86_64`，对应 Intel Mac
 
-如果后面扩展到 Windows，可以在不改动 JS API 的前提下补充平台实现。
+当前仓库实际支持：
+
+- `darwin-arm64`
+- `darwin-x64`
+- `windows-x64`
 
 ## 2. 基本要求
 
 建议统一以下工具链：
 
-- Node.js 20 或 22 LTS
+- Node.js 20+，CI 当前使用 Node.js 24
 - pnpm 10+
 - Python 3
 - CMake 3.10+
@@ -156,7 +151,7 @@ node -p "process.arch"
 arm64
 ```
 
-如果后续项目加入 `package.json`，则依赖安装和构建也要在同一架构终端里完成：
+依赖安装和构建都要在同一架构终端里完成：
 
 ```bash
 pnpm install
@@ -244,9 +239,35 @@ command -v brew
 - 不要假定 macOS 只需要 `MemoryFile_Linux.cpp`
 - 如果后续写 `binding.gyp` 或 CMake 包装层，源码列表必须和平台条件保持一致
 
-## 9. 后续原生模块开发约定
+## 9. 当前源码结构
 
-等根目录开始补齐 `package.json`、`binding.gyp`、`src/*.cpp` 后，建议遵守以下规则。
+绑定层当前已经做了工程化拆分：
+
+- `src/core/`
+  - `node_mmkv_binding.h`
+  - `node_mmkv_core.cpp`
+- `src/helpers/`
+  - `value_utils.*`
+  - `config_parser.*`
+- `src/bindings/`
+  - `module_init.cpp`
+  - `static/admin.cpp`
+  - `static/backup.cpp`
+  - `instance/numbers.cpp`
+  - `instance/strings.cpp`
+  - `instance/buffers.cpp`
+  - `instance/keys.cpp`
+  - `instance/maintenance.cpp`
+
+维护原则：
+
+- 公共类型、类声明放 `core/`
+- 参数校验、配置解析放 `helpers/`
+- Node-API 导出注册放 `bindings/module_init.cpp`
+- 静态方法与实例方法分开
+- 实例方法继续按能力分组，不再回退到单文件堆叠
+
+## 10. 后续原生模块开发约定
 
 ### 9.1 绑定层使用 Node-API
 
@@ -277,7 +298,43 @@ command -v brew
 - 原生 `arm64` 验证
 - Rosetta 下 `x64` 验证
 
-## 10. 推荐测试矩阵
+## 11. 测试与回归
+
+本仓库当前测试命令：
+
+```bash
+pnpm test
+```
+
+它会自动带上：
+
+```bash
+node --expose-gc --import tsx --test
+```
+
+原因：
+
+- 需要运行 TypeScript 测试
+- 需要在内存回归测试里显式调用 `global.gc()`
+
+当前测试覆盖：
+
+- 基础读写能力
+- 加密与 `reKey`
+- `defaultMMKV`
+- 单库 / 全量备份恢复
+- 内存压力回归
+
+如果后续改动了：
+
+- `Buffer` 编解码
+- `std::string` / `MMKVPath_t` 生命周期
+- `close()` / `onExit()` 行为
+- 大对象写入路径
+
+必须重新跑完整测试。
+
+## 12. 推荐测试矩阵
 
 后续补 CI 时，建议最少覆盖：
 
@@ -293,7 +350,7 @@ command -v brew
 
 不要把两种架构混成一个不透明产物名。
 
-## 11. 常见问题
+## 13. 常见问题
 
 ### 11.1 `wrong architecture`
 

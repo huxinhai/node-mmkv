@@ -3,7 +3,17 @@
     {
       "target_name": "mmkv",
       "sources": [
-        "src/node_mmkv.cpp",
+        "src/core/node_mmkv_core.cpp",
+        "src/helpers/value_utils.cpp",
+        "src/helpers/config_parser.cpp",
+        "src/bindings/module_init.cpp",
+        "src/bindings/static/admin.cpp",
+        "src/bindings/static/backup.cpp",
+        "src/bindings/instance/numbers.cpp",
+        "src/bindings/instance/strings.cpp",
+        "src/bindings/instance/buffers.cpp",
+        "src/bindings/instance/keys.cpp",
+        "src/bindings/instance/maintenance.cpp",
         "MMKV/Core/MMKV.cpp",
         "MMKV/Core/MMKV_IO.cpp",
         "MMKV/Core/MMKV_OSX.cpp",
@@ -35,6 +45,7 @@
         "MMKV/Core/crc32/zlib/crc32.cpp"
       ],
       "include_dirs": [
+        "src",
         "MMKV/Core",
         "<!@(node -p \"require('node-addon-api').include\")"
       ],

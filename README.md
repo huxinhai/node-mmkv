@@ -6,7 +6,7 @@
 
 - macOS Apple Silicon: `arm64`
 - macOS Intel: `x64`
-- Windows: `x64` / `arm64`
+- Windows: `x64`
 - Node.js 20+
 - 包管理器：`pnpm`
 
@@ -30,6 +30,8 @@ pnpm install
 pnpm build
 pnpm test
 ```
+
+测试脚本会自动带上 `--expose-gc`，用于运行内存回归测试。
 
 如果你是 Apple Silicon Mac，建议至少验证两套环境：
 
@@ -183,6 +185,41 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 - `backupOneToDirectory/restoreOneFromDirectory`
 - `backupAllToDirectory/restoreAllFromDirectory`
 
+## 源码结构
+
+当前绑定层已经按职责拆分：
+
+- `src/core/`
+  - `node_mmkv_binding.h`：核心类型、类声明
+  - `node_mmkv_core.cpp`：实例生命周期、共享核心逻辑
+- `src/helpers/`
+  - `value_utils.*`：参数校验、数值与字符串转换
+  - `config_parser.*`：`MMKVOptions` 解析
+- `src/bindings/`
+  - `module_init.cpp`：Node-API 模块导出
+  - `static/`：静态 API，比如 `initialize`、`backup/restore`
+  - `instance/`：实例 API，按 `numbers / strings / buffers / keys / maintenance` 分组
+
+这样后续继续加能力时，不需要再把所有逻辑堆到一个 `.cpp` 文件里。
+
+## 测试
+
+当前测试除了基础功能回归，还包含内存压力回归：
+
+- 功能测试：
+  - 基础读写
+  - `defaultMMKV`
+  - `reKey`
+  - 单库 / 全量 `backup/restore`
+- 内存测试：
+  - 反复创建实例
+  - 写入较大 `Buffer` / `string`
+  - `clearAll()` + `close()`
+  - 采样 `rss / heapUsed / external / arrayBuffers`
+  - 用阈值检查是否出现明显只涨不回的趋势
+
+测试文件位于 [test/smoke.test.ts](/Users/mac/html/node-mmkv/test/smoke.test.ts)。
+
 ## Electron 接入建议
 
 - 主进程优先使用这个原生模块
@@ -211,7 +248,6 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 - 输出产物分为：
   - `darwin-arm64`
   - `darwin-x64`
-  - `windows-arm64`
   - `windows-x64`
 - 打包前会对 `.node` 做符号裁剪，并使用更高压缩级别生成归档
 

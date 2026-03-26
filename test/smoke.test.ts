@@ -9,7 +9,22 @@ const require = createRequire(import.meta.url);
 const { MMKV, version } = require("..") as typeof import("../index");
 
 const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "mmkv-"));
-MMKV.initialize(rootDir);
+MMKV.initialize(rootDir, 4);
+
+function toMB(bytes: number) {
+  return bytes / 1024 / 1024;
+}
+
+function collectMemorySnapshot() {
+  global.gc?.();
+  const usage = process.memoryUsage();
+  return {
+    rssMB: toMB(usage.rss),
+    heapUsedMB: toMB(usage.heapUsed),
+    externalMB: toMB(usage.external),
+    arrayBuffersMB: toMB(usage.arrayBuffers),
+  };
+}
 
 test.after(() => {
   MMKV.onExit();
@@ -162,4 +177,54 @@ test("MMKV addon can backup and restore all stores", () => {
     fs.rmSync(backupDir, { recursive: true, force: true });
     fs.rmSync(restoreDir, { recursive: true, force: true });
   }
+});
+
+test("MMKV addon does not show runaway memory growth under repeated open/write/close cycles", {
+  skip: typeof global.gc !== "function",
+  timeout: 30000,
+}, () => {
+  const bufferPayload = Buffer.alloc(512 * 1024, 7);
+  const stringPayload = "x".repeat(16 * 1024);
+  const snapshots = [collectMemorySnapshot()];
+
+  for (let round = 0; round < 8; round += 1) {
+    for (let i = 0; i < 12; i += 1) {
+      const kv = new MMKV(`memory-${round}-${i}`, { rootPath: rootDir });
+      for (let j = 0; j < 8; j += 1) {
+        assert.equal(kv.setBuffer(`buffer-${j}`, bufferPayload), true);
+        assert.equal(kv.setString(`text-${j}`, stringPayload), true);
+        assert.equal(kv.getBuffer(`buffer-${j}`)?.length, bufferPayload.length);
+        assert.equal(kv.getString(`text-${j}`), stringPayload);
+      }
+      kv.clearAll();
+      kv.close();
+    }
+    snapshots.push(collectMemorySnapshot());
+  }
+
+  const finalSnapshot = collectMemorySnapshot();
+
+  const tailSnapshots = snapshots.slice(-3);
+  const tailRssValues = tailSnapshots.map((entry) => entry.rssMB);
+  const tailRssDrift = Math.max(...tailRssValues) - Math.min(...tailRssValues);
+  const heapGrowth = finalSnapshot.heapUsedMB - snapshots[0].heapUsedMB;
+  const externalGrowth = finalSnapshot.externalMB - snapshots[0].externalMB;
+  const arrayBufferGrowth = finalSnapshot.arrayBuffersMB - snapshots[0].arrayBuffersMB;
+
+  assert.ok(
+    tailRssDrift < 64,
+    `RSS kept drifting instead of stabilizing: ${tailRssDrift.toFixed(2)} MB`
+  );
+  assert.ok(
+    heapGrowth < 16,
+    `Heap usage grew too much after GC: ${heapGrowth.toFixed(2)} MB`
+  );
+  assert.ok(
+    externalGrowth < 32,
+    `External memory grew too much after GC: ${externalGrowth.toFixed(2)} MB`
+  );
+  assert.ok(
+    arrayBufferGrowth < 8,
+    `ArrayBuffer memory grew too much after GC: ${arrayBufferGrowth.toFixed(2)} MB`
+  );
 });

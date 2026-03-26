@@ -74,6 +74,8 @@ jobs:
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
           DIST_DIR="dist/mmkv-v${VERSION}-${{ matrix.target.name }}"
+          TAR_PATH="${DIST_DIR}.tar"
+          ARCHIVE_PATH="${DIST_DIR}.tar.gz"
           mkdir -p "${DIST_DIR}/build/Release"
           cp package.json "${DIST_DIR}/"
           cp pnpm-lock.yaml "${DIST_DIR}/"
@@ -82,7 +84,10 @@ jobs:
           cp DEVELOPMENT.md "${DIST_DIR}/"
           if [ -f README.md ]; then cp README.md "${DIST_DIR}/"; fi
           cp build/Release/mmkv.node "${DIST_DIR}/build/Release/"
-          tar --options gzip:compression-level=9 -czf "${DIST_DIR}.tar.gz" -C dist "$(basename "${DIST_DIR}")"
+          rm -f "${TAR_PATH}" "${ARCHIVE_PATH}"
+          tar -cf "${TAR_PATH}" -C dist "$(basename "${DIST_DIR}")"
+          gzip -9 -c "${TAR_PATH}" > "${ARCHIVE_PATH}"
+          rm -f "${TAR_PATH}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6

@@ -1,3 +1,11 @@
+export declare enum MMKVLogLevel {
+  Debug = 0,
+  Info = 1,
+  Warning = 2,
+  Error = 3,
+  None = 4,
+}
+
 export interface MMKVOptions {
   multiProcess?: boolean;
   readOnly?: boolean;
@@ -7,10 +15,12 @@ export interface MMKVOptions {
   aes256?: boolean;
 }
 
+export type MMKVIntegerLike = bigint | number;
+
 export declare class MMKV {
   constructor(id: string, options?: MMKVOptions);
 
-  static initialize(rootDir: string, logLevel?: number): string;
+  static initialize(rootDir: string, logLevel?: MMKVLogLevel | number): string;
   static onExit(): void;
   static version(): string;
   static defaultMMKV(options?: MMKVOptions): MMKV;
@@ -25,10 +35,10 @@ export declare class MMKV {
   getInt32(key: string, defaultValue?: number): number;
   setUInt32(key: string, value: number): boolean;
   getUInt32(key: string, defaultValue?: number): number;
-  setUInt64(key: string, value: bigint | number): boolean;
-  getUInt64(key: string, defaultValue?: bigint | number): bigint;
-  setInt64(key: string, value: bigint | number): boolean;
-  getInt64(key: string, defaultValue?: bigint | number): bigint;
+  setUInt64(key: string, value: MMKVIntegerLike): boolean;
+  getUInt64(key: string, defaultValue?: MMKVIntegerLike): bigint;
+  setInt64(key: string, value: MMKVIntegerLike): boolean;
+  getInt64(key: string, defaultValue?: MMKVIntegerLike): bigint;
   setFloat(key: string, value: number): boolean;
   getFloat(key: string, defaultValue?: number): number;
   setDouble(key: string, value: number): boolean;
@@ -53,6 +63,11 @@ export declare class MMKV {
   reKey(cryptKey?: string | null, aes256?: boolean): boolean;
   cryptKey(): string | null;
   close(): void;
+}
+
+export interface MMKVModule {
+  MMKV: typeof MMKV;
+  version: string;
 }
 
 export declare const version: string;
