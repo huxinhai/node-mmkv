@@ -1,0 +1,27 @@
+{
+  "name": "node-mmkv",
+  "version": "0.1.0",
+  "description": "Minimal Node-API bindings for Tencent MMKV on macOS",
+  "main": "lib/index.js",
+  "types": "index.d.ts",
+  "packageManager": "pnpm@10.12.4",
+  "gypfile": true,
+  "private": true,
+  "os": [
+    "darwin"
+  ],
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "rebuild": "node-gyp rebuild --verbose",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.3.1"
+  },
+  "devDependencies": {
+    "node-gyp": "^11.2.0"
+  }
+}
