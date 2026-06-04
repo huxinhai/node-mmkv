@@ -6,7 +6,6 @@
   "types": "index.d.ts",
   "packageManager": "pnpm@10.12.4",
   "gypfile": true,
-  "private": true,
   "os": [
     "darwin",
     "win32"
