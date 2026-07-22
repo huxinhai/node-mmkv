@@ -1,6 +1,6 @@
 # mmkv
 
-**语言：** [English](README.md) | 简体中文
+**语言：** [English](https://github.com/huxinhai/node-mmkv/blob/main/README.md) | 简体中文
 
 `mmkv` 是一个面向 [Tencent MMKV](https://github.com/Tencent/MMKV) 的 Node-API 原生绑定。它把仓库内 `MMKV/` 目录中的上游 MMKV 核心封装成 Node.js / Electron 可用的高性能持久化 KV 存储模块。
 

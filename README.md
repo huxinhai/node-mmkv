@@ -1,6 +1,6 @@
 # mmkv
 
-**Language:** English | [简体中文](README.zh-CN.md)
+**Language:** English | [简体中文](https://github.com/huxinhai/node-mmkv/blob/main/README.zh-CN.md)
 
 `mmkv` is a Node-API native binding for [Tencent MMKV](https://github.com/Tencent/MMKV). It provides high-performance, persistent key-value storage for Node.js and Electron applications by wrapping the upstream MMKV core that is vendored in this repository under `MMKV/`.
 

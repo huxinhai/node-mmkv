@@ -1,29 +1,64 @@
 {
-  "name": "mmkv",
+  "name": "@huxinhai/mmkv",
   "version": "0.1.0",
-  "description": "Node-API bindings for Tencent MMKV across macOS and Windows",
-  "main": "build/Release/mmkv.node",
+  "description": "Node-API bindings for Tencent MMKV across macOS, Linux, and Windows",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
   "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huxinhai/node-mmkv.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
   "packageManager": "pnpm@10.12.4",
   "gypfile": true,
   "os": [
     "darwin",
+    "linux",
     "win32"
   ],
   "scripts": {
-    "build": "node-gyp rebuild",
+    "build": "pnpm build:ts && pnpm build:native",
+    "build:native": "node-gyp rebuild",
+    "build:ts": "tsc -p tsconfig.json",
+    "install": "node-gyp-build || node-gyp rebuild",
+    "prebuild": "pnpm build:ts && prebuildify --napi",
     "rebuild": "node-gyp rebuild --verbose",
-    "test": "node --expose-gc --import tsx --test test/*.test.ts"
+    "test": "pnpm build:ts && node --expose-gc --import tsx --test test/*.test.ts"
   },
+  "files": [
+    "dist/",
+    "prebuilds/",
+    "index.d.ts",
+    "binding.gyp",
+    "src/",
+    "MMKV/Core/",
+    "MMKV/LICENSE.TXT"
+  ],
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "node-addon-api": "^8.3.1"
+    "node-addon-api": "^8.3.1",
+    "node-gyp-build": "^4.8.4"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "node-gyp": "^11.2.0",
+    "prebuildify": "^6.0.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

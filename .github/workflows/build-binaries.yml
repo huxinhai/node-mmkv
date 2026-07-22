@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -30,6 +31,9 @@ jobs:
           - name: darwin-x64
             runner: macos-15-intel
             platform: darwin
+          - name: linux-x64
+            runner: ubuntu-24.04
+            platform: linux
           - name: windows-x64
             runner: windows-2025
             platform: win32
@@ -54,46 +58,59 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build native addon
-        run: pnpm build
+      - name: Build prebuilt native addon
+        run: pnpm prebuild
 
       - name: Run tests
         run: pnpm test
 
       - name: Strip native binary
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euo pipefail
           if command -v strip >/dev/null 2>&1; then
-            strip -x build/Release/mmkv.node || true
+            strip -x prebuilds/${{ matrix.target.platform }}-*/*.node || true
           fi
 
-      - name: Package binary bundle
+      - name: Install Linux UPX
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx-ucl
+
+      - name: Compress Linux native binary
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="$(node -p "require('./package.json').version")"
-          DIST_DIR="dist/mmkv-v${VERSION}-${{ matrix.target.name }}"
-          TAR_PATH="${DIST_DIR}.tar"
-          ARCHIVE_PATH="${DIST_DIR}.tar.gz"
-          mkdir -p "${DIST_DIR}/build/Release"
-          cp package.json "${DIST_DIR}/"
-          cp pnpm-lock.yaml "${DIST_DIR}/"
-          cp binding.gyp "${DIST_DIR}/"
-          cp index.d.ts "${DIST_DIR}/"
-          cp DEVELOPMENT.md "${DIST_DIR}/"
-          if [ -f README.md ]; then cp README.md "${DIST_DIR}/"; fi
-          cp build/Release/mmkv.node "${DIST_DIR}/build/Release/"
-          rm -f "${TAR_PATH}" "${ARCHIVE_PATH}"
-          tar -cf "${TAR_PATH}" -C dist "$(basename "${DIST_DIR}")"
-          gzip -9 -c "${TAR_PATH}" > "${ARCHIVE_PATH}"
-          rm -f "${TAR_PATH}"
+          shopt -s nullglob
+          binaries=(prebuilds/linux-*/*.node)
+          if [ "${#binaries[@]}" -eq 0 ]; then
+            echo "No Linux native binaries found"
+            exit 1
+          fi
+          upx --best --lzma "${binaries[@]}"
+
+      - name: Install UPX
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install upx -y
+
+      - name: Compress Windows native binary
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Get-ChildItem -Path prebuilds -Recurse -Filter *.node | ForEach-Object {
+            upx --best --lzma $_.FullName
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target.name }}
-          path: dist/*.tar.gz
+          path: prebuilds
           if-no-files-found: error
           retention-days: 7
 
@@ -101,4 +118,50 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.tar.gz
+          files: prebuilds/**/*.node
+
+  publish:
+    name: Publish npm package
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download prebuilds
+        uses: actions/download-artifact@v6
+        with:
+          pattern: '*'
+          path: .
+          merge-multiple: true
+
+      - name: Build TypeScript entry
+        run: pnpm build:ts
+
+      - name: Check npm package contents
+        run: npm pack --dry-run
+
+      - name: Publish to npm
+        run: npm publish --access public
