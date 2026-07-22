@@ -15,6 +15,7 @@ This project is focused on practical local storage APIs for desktop runtime use:
 - Native output: `build/Release/mmkv.node`
 - Current CI targets: `darwin-arm64`, `darwin-x64`, `linux-x64`, `windows-x64`
 - TypeScript declarations: [`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts)
+- License: [`BSD-3-Clause`](https://github.com/huxinhai/node-mmkv/blob/main/LICENSE)
 - Package visibility: public, with no `private` flag
 - npm publishing: automated from GitHub Releases through npm Trusted Publishing
 

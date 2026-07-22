@@ -1,7 +1,8 @@
 {
   "name": "@huxinhai/mmkv",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Node-API bindings for Tencent MMKV across macOS, Linux, and Windows",
+  "license": "BSD-3-Clause",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -36,6 +37,7 @@
   "files": [
     "dist/",
     "prebuilds/",
+    "LICENSE",
     "index.d.ts",
     "binding.gyp",
     "src/",

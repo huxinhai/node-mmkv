@@ -15,6 +15,7 @@
 - 原生产物：`build/Release/mmkv.node`
 - 当前 CI 目标：`darwin-arm64`、`darwin-x64`、`linux-x64`、`windows-x64`
 - TypeScript 声明：[`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts)
+- 开源协议：[`BSD-3-Clause`](https://github.com/huxinhai/node-mmkv/blob/main/LICENSE)
 - 包可见性：public，不设置 `private` 标记
 - npm 发布：通过 GitHub Release 和 npm Trusted Publishing 自动发布
 
