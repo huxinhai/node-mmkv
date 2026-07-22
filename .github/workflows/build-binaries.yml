@@ -114,11 +114,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Package release asset
+        if: github.event_name == 'release'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          tar -czf release-assets/${{ matrix.target.name }}.tar.gz -C prebuilds ${{ matrix.target.platform }}-*
+
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: prebuilds/**/*.node
+          files: release-assets/*
 
   publish:
     name: Publish npm package
@@ -154,8 +162,18 @@ jobs:
         uses: actions/download-artifact@v6
         with:
           pattern: '*'
-          path: .
+          path: downloaded-prebuilds
           merge-multiple: true
+
+      - name: Prepare prebuilds for npm package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf prebuilds
+          mkdir -p prebuilds
+          find downloaded-prebuilds -mindepth 2 -maxdepth 2 -type d -exec cp -R {} prebuilds/ \;
+          find prebuilds -maxdepth 2 -type f -name '*.node' -print | sort
+          test "$(find prebuilds -maxdepth 2 -type f -name '*.node' | wc -l | tr -d ' ')" -ge 4
 
       - name: Build TypeScript entry
         run: pnpm build:ts
