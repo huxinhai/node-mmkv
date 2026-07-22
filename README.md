@@ -45,6 +45,26 @@ The binding does not expose every upstream MMKV capability yet. It prioritizes t
 
 On macOS, install Xcode Command Line Tools. On Windows, use a Visual Studio/MSVC build environment that works with `node-gyp`.
 
+## Installation
+
+```bash
+npm install @huxinhai/mmkv
+```
+
+```bash
+pnpm add @huxinhai/mmkv
+```
+
+```bash
+yarn add @huxinhai/mmkv
+```
+
+```bash
+bun add @huxinhai/mmkv
+```
+
+Prebuilt native binaries are included for macOS arm64, macOS x64, Linux x64, and Windows x64. Other platforms fall back to local `node-gyp` compilation during install.
+
 ## Build
 
 Initialize the MMKV submodule if needed, then install, build, and test:
@@ -82,8 +102,10 @@ Use the `darwin-arm64` build for native Apple Silicon runtimes and the `darwin-x
 
 ## Quick Start
 
+### ES Modules
+
 ```js
-const { MMKV } = require("@huxinhai/mmkv");
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("./.mmkv");
 
@@ -111,10 +133,25 @@ MMKV.onExit();
 
 Call `MMKV.initialize(rootDir)` before opening stores that rely on the global MMKV root directory. You can also pass `rootPath` per store.
 
-## Opening Stores
+### CommonJS
 
 ```js
 const { MMKV } = require("@huxinhai/mmkv");
+
+MMKV.initialize("./.mmkv");
+
+const kv = new MMKV("app");
+kv.setString("name", "demo");
+console.log(kv.getString("name"));
+
+kv.close();
+MMKV.onExit();
+```
+
+## Opening Stores
+
+```js
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("/tmp/mmkv-root", 4);
 
@@ -221,7 +258,7 @@ secure.close();
 ## Backup and Restore
 
 ```js
-const { MMKV } = require("@huxinhai/mmkv");
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("/tmp/mmkv-root");
 

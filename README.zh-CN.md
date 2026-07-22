@@ -45,6 +45,26 @@
 
 macOS 需要安装 Xcode Command Line Tools。Windows 需要可被 `node-gyp` 使用的 Visual Studio/MSVC 构建环境。
 
+## 安装
+
+```bash
+npm install @huxinhai/mmkv
+```
+
+```bash
+pnpm add @huxinhai/mmkv
+```
+
+```bash
+yarn add @huxinhai/mmkv
+```
+
+```bash
+bun add @huxinhai/mmkv
+```
+
+macOS arm64、macOS x64、Linux x64 和 Windows x64 已经包含预编译原生二进制。其他平台会在安装时回退到本机 `node-gyp` 编译。
+
 ## 构建
 
 如果需要，先初始化 MMKV 子模块，然后安装、构建和测试：
@@ -82,8 +102,10 @@ pnpm test
 
 ## 快速开始
 
+### ES Modules
+
 ```js
-const { MMKV } = require("@huxinhai/mmkv");
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("./.mmkv");
 
@@ -111,10 +133,25 @@ MMKV.onExit();
 
 如果 store 依赖全局 MMKV 根目录，需要先调用 `MMKV.initialize(rootDir)`。也可以在单个 store 的 options 里传入 `rootPath`。
 
-## 打开 Store
+### CommonJS
 
 ```js
 const { MMKV } = require("@huxinhai/mmkv");
+
+MMKV.initialize("./.mmkv");
+
+const kv = new MMKV("app");
+kv.setString("name", "demo");
+console.log(kv.getString("name"));
+
+kv.close();
+MMKV.onExit();
+```
+
+## 打开 Store
+
+```js
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("/tmp/mmkv-root", 4);
 
@@ -221,7 +258,7 @@ secure.close();
 ## 备份和恢复
 
 ```js
-const { MMKV } = require("@huxinhai/mmkv");
+import { MMKV } from "@huxinhai/mmkv";
 
 MMKV.initialize("/tmp/mmkv-root");
 
