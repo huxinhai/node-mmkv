@@ -120,7 +120,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          tar -czf release-assets/${{ matrix.target.name }}.tar.gz -C prebuilds ${{ matrix.target.platform }}-*
+          platform_dir="$(find prebuilds -mindepth 1 -maxdepth 1 -type d -name '${{ matrix.target.platform }}-*' -print -quit)"
+          if [ -z "$platform_dir" ]; then
+            echo "No prebuild directory found for ${{ matrix.target.name }}"
+            exit 1
+          fi
+          tar -czf "release-assets/${{ matrix.target.name }}.tar.gz" -C prebuilds "$(basename "$platform_dir")"
 
       - name: Upload release asset
         if: github.event_name == 'release'
@@ -171,7 +176,15 @@ jobs:
           set -euo pipefail
           rm -rf prebuilds
           mkdir -p prebuilds
-          find downloaded-prebuilds -mindepth 2 -maxdepth 2 -type d -exec cp -R {} prebuilds/ \;
+          while IFS= read -r -d '' node_file; do
+            platform_dir="$(basename "$(dirname "$node_file")")"
+            case "$platform_dir" in
+              darwin-*|linux-*|win32-*)
+                mkdir -p "prebuilds/$platform_dir"
+                cp "$node_file" "prebuilds/$platform_dir/"
+                ;;
+            esac
+          done < <(find downloaded-prebuilds -type f -name '*.node' -print0)
           find prebuilds -maxdepth 2 -type f -name '*.node' -print | sort
           test "$(find prebuilds -maxdepth 2 -type f -name '*.node' | wc -l | tr -d ' ')" -ge 4
 
