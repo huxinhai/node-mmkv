@@ -2,21 +2,21 @@
 
 **Language:** English | [简体中文](https://github.com/huxinhai/node-mmkv/blob/main/README.zh-CN.md)
 
-`mmkv` is a Node-API native binding for [Tencent MMKV](https://github.com/Tencent/MMKV). It provides high-performance, persistent key-value storage for Node.js and Electron applications by wrapping the upstream MMKV core that is vendored in this repository under `MMKV/`.
+`@huxinhai/mmkv` is a Node-API native binding for [Tencent MMKV](https://github.com/Tencent/MMKV). It provides high-performance, persistent key-value storage for Node.js and Electron applications by wrapping the upstream MMKV core that is vendored in this repository under `MMKV/`.
 
 This project is focused on practical local storage APIs for desktop runtime use: typed values, binary buffers, encryption keys, store maintenance, and backup/restore.
 
 ## Status
 
-- Package name: `mmkv`
+- Package name: `@huxinhai/mmkv`
 - Runtime: Node.js 20+
 - Package manager: pnpm 10.12.4
 - Native layer: Node-API through `node-addon-api`
 - Native output: `build/Release/mmkv.node`
-- Current CI targets: `darwin-arm64`, `darwin-x64`, `windows-x64`
-- TypeScript declarations: [`index.d.ts`](index.d.ts)
+- Current CI targets: `darwin-arm64`, `darwin-x64`, `linux-x64`, `windows-x64`
+- TypeScript declarations: [`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts)
 - Package visibility: public, with no `private` flag
-- npm publishing: automated publishing is not configured yet
+- npm publishing: automated from GitHub Releases through npm Trusted Publishing
 
 ## Features
 
@@ -83,7 +83,7 @@ Use the `darwin-arm64` build for native Apple Silicon runtimes and the `darwin-x
 ## Quick Start
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("./.mmkv");
 
@@ -114,7 +114,7 @@ Call `MMKV.initialize(rootDir)` before opening stores that rely on the global MM
 ## Opening Stores
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("/tmp/mmkv-root", 4);
 
@@ -221,7 +221,7 @@ secure.close();
 ## Backup and Restore
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("/tmp/mmkv-root");
 
@@ -241,10 +241,10 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 
 ## TypeScript
 
-Type declarations are included in [`index.d.ts`](index.d.ts). The main runtime exports are:
+Type declarations are included in [`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts). The main runtime exports are:
 
 ```ts
-import { MMKV, version } from "mmkv";
+import { MMKV, version } from "@huxinhai/mmkv";
 ```
 
 The public API includes:
@@ -268,7 +268,7 @@ MMKV data is isolated by `rootPath` and store id. Two applications will not over
 
 ## CI Binary Bundles
 
-The repository includes [`build-binaries.yml`](.github/workflows/build-binaries.yml). It runs on:
+The repository includes [`build-binaries.yml`](https://github.com/huxinhai/node-mmkv/blob/main/.github/workflows/build-binaries.yml). It runs on:
 
 - Pushes to `main`
 - Pull requests
@@ -279,9 +279,10 @@ The workflow builds and tests each target, strips the native binary when possibl
 
 - `darwin-arm64`
 - `darwin-x64`
+- `linux-x64`
 - `windows-x64`
 
-Release builds upload `dist/mmkv-v<version>-<target>.tar.gz` archives as release assets.
+Release builds upload per-platform `.tar.gz` archives as release assets and publish the npm package with all prebuilt binaries included.
 
 ## Project Layout
 
@@ -311,11 +312,11 @@ index.d.ts
 test/smoke.test.ts
 ```
 
-See [`DEVELOPMENT.md`](DEVELOPMENT.md) for local development notes, especially macOS architecture handling.
+See [`DEVELOPMENT.md`](https://github.com/huxinhai/node-mmkv/blob/main/DEVELOPMENT.md) for local development notes, especially macOS architecture handling.
 
 ## Tests
 
-The smoke test suite in [`test/smoke.test.ts`](test/smoke.test.ts) covers:
+The smoke test suite in [`test/smoke.test.ts`](https://github.com/huxinhai/node-mmkv/blob/main/test/smoke.test.ts) covers:
 
 - Basic typed reads and writes
 - `defaultMMKV`
@@ -333,8 +334,6 @@ pnpm test
 
 ## Current Limits
 
-- No automated npm publish flow yet.
-- No install-time prebuilt binary downloader yet.
-- Linux is not part of the package `os` list or CI target matrix.
+- Prebuilt binaries are currently published for macOS arm64, macOS x64, Linux x64, and Windows x64.
+- Other platforms fall back to local `node-gyp` compilation during install.
 - The binding covers common Node.js and Electron storage needs, but not the full upstream MMKV API.
-- Native binaries are stripped for size, but the project avoids high-risk compression or obfuscation steps such as UPX to preserve Electron and macOS loading compatibility.

@@ -2,21 +2,21 @@
 
 **语言：** [English](https://github.com/huxinhai/node-mmkv/blob/main/README.md) | 简体中文
 
-`mmkv` 是一个面向 [Tencent MMKV](https://github.com/Tencent/MMKV) 的 Node-API 原生绑定。它把仓库内 `MMKV/` 目录中的上游 MMKV 核心封装成 Node.js / Electron 可用的高性能持久化 KV 存储模块。
+`@huxinhai/mmkv` 是一个面向 [Tencent MMKV](https://github.com/Tencent/MMKV) 的 Node-API 原生绑定。它把仓库内 `MMKV/` 目录中的上游 MMKV 核心封装成 Node.js / Electron 可用的高性能持久化 KV 存储模块。
 
 这个项目优先覆盖桌面运行时最常用的本地存储能力：类型化值、二进制 Buffer、加密密钥、存储维护以及备份恢复。
 
 ## 当前状态
 
-- 包名：`mmkv`
+- 包名：`@huxinhai/mmkv`
 - 运行时：Node.js 20+
 - 包管理器：pnpm 10.12.4
 - 原生层：基于 `node-addon-api` 的 Node-API
 - 原生产物：`build/Release/mmkv.node`
-- 当前 CI 目标：`darwin-arm64`、`darwin-x64`、`windows-x64`
-- TypeScript 声明：[`index.d.ts`](index.d.ts)
+- 当前 CI 目标：`darwin-arm64`、`darwin-x64`、`linux-x64`、`windows-x64`
+- TypeScript 声明：[`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts)
 - 包可见性：public，不设置 `private` 标记
-- npm 发布：暂未配置自动化发布流程
+- npm 发布：通过 GitHub Release 和 npm Trusted Publishing 自动发布
 
 ## 功能特性
 
@@ -83,7 +83,7 @@ pnpm test
 ## 快速开始
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("./.mmkv");
 
@@ -114,7 +114,7 @@ MMKV.onExit();
 ## 打开 Store
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("/tmp/mmkv-root", 4);
 
@@ -221,7 +221,7 @@ secure.close();
 ## 备份和恢复
 
 ```js
-const { MMKV } = require("mmkv");
+const { MMKV } = require("@huxinhai/mmkv");
 
 MMKV.initialize("/tmp/mmkv-root");
 
@@ -241,10 +241,10 @@ MMKV.restoreAllFromDirectory("/tmp/mmkv-backup-all", "/tmp/mmkv-restore-all");
 
 ## TypeScript
 
-类型声明已经包含在 [`index.d.ts`](index.d.ts)。主要运行时导出如下：
+类型声明已经包含在 [`index.d.ts`](https://github.com/huxinhai/node-mmkv/blob/main/index.d.ts)。主要运行时导出如下：
 
 ```ts
-import { MMKV, version } from "mmkv";
+import { MMKV, version } from "@huxinhai/mmkv";
 ```
 
 公开 API 包括：
@@ -268,7 +268,7 @@ MMKV 数据由 `rootPath` 和 store id 共同隔离。不同应用使用不同 r
 
 ## CI 二进制产物
 
-仓库包含 [`build-binaries.yml`](.github/workflows/build-binaries.yml)，触发场景包括：
+仓库包含 [`build-binaries.yml`](https://github.com/huxinhai/node-mmkv/blob/main/.github/workflows/build-binaries.yml)，触发场景包括：
 
 - 推送到 `main`
 - Pull request
@@ -279,9 +279,10 @@ MMKV 数据由 `rootPath` 和 store id 共同隔离。不同应用使用不同 r
 
 - `darwin-arm64`
 - `darwin-x64`
+- `linux-x64`
 - `windows-x64`
 
-Release 构建会把 `dist/mmkv-v<version>-<target>.tar.gz` 上传为 release asset。
+Release 构建会上传每个平台的 `.tar.gz` release asset，并发布包含全部预编译二进制的 npm 包。
 
 ## 项目结构
 
@@ -311,11 +312,11 @@ index.d.ts
 test/smoke.test.ts
 ```
 
-更多本地开发说明见 [`DEVELOPMENT.md`](DEVELOPMENT.md)，尤其是 macOS 多架构处理方式。
+更多本地开发说明见 [`DEVELOPMENT.md`](https://github.com/huxinhai/node-mmkv/blob/main/DEVELOPMENT.md)，尤其是 macOS 多架构处理方式。
 
 ## 测试
 
-[`test/smoke.test.ts`](test/smoke.test.ts) 中的 smoke 测试覆盖：
+[`test/smoke.test.ts`](https://github.com/huxinhai/node-mmkv/blob/main/test/smoke.test.ts) 中的 smoke 测试覆盖：
 
 - 基础类型读写
 - `defaultMMKV`
@@ -333,8 +334,6 @@ pnpm test
 
 ## 当前限制
 
-- 暂无自动化 npm 发布流程。
-- 暂无安装时自动下载预编译二进制的脚本。
-- Linux 不在 package `os` 列表里，也不在 CI 目标矩阵里。
+- 当前预编译二进制覆盖 macOS arm64、macOS x64、Linux x64 和 Windows x64。
+- 其他平台会在安装时回退到本机 `node-gyp` 编译。
 - 当前绑定覆盖 Node.js / Electron 常用存储场景，但还不是完整的上游 MMKV API。
-- 原生二进制会做符号裁剪以减小体积，但不会使用 UPX 这类风险较高的压缩或混淆步骤，以保持 Electron 和 macOS 加载兼容性。
