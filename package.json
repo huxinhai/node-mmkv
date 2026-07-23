@@ -1,15 +1,35 @@
 {
   "name": "@huxinhai/mmkv",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Node-API bindings for Tencent MMKV across macOS, Linux, and Windows",
+  "keywords": [
+    "mmkv",
+    "node-mmkv",
+    "tencent-mmkv",
+    "node",
+    "nodejs",
+    "node-addon-api",
+    "napi",
+    "native-addon",
+    "key-value",
+    "key-value-store",
+    "storage",
+    "persistent-storage",
+    "embedded-database",
+    "typescript"
+  ],
   "license": "BSD-3-Clause",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "index.d.ts",
+  "homepage": "https://github.com/huxinhai/node-mmkv#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/huxinhai/node-mmkv.git"
+  },
+  "bugs": {
+    "url": "https://github.com/huxinhai/node-mmkv/issues"
   },
   "exports": {
     ".": {
